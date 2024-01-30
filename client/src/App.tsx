@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 
-const socket = io('/');
+const socket = io({
+  auth: {
+    serverOffset: 0
+  }
+});
+
+interface Message {
+  sender: string;
+  msg: string;
+}
 
 function App() {
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [user, setUser] = useState("");
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    socket.on('chat message', (msg: string) => {
-      setMessages((prevMessages) => [...prevMessages, msg]);
-    });
-    
+    socket.on('chat message', (msg: string, sender: string, username: string) => {
+      console.log(msg, sender, username);
+      setUser(username);
+      setMessages((prevMessages) => [...prevMessages, {msg, sender}]);
+      
+    }, );
     return () => {
       socket.off('chat message');
     };
@@ -30,7 +42,7 @@ function App() {
       <section className='w-full p-6'>
         <ul id='messages'>
           {messages.map((msg) => (
-            <li key={msg}>{msg}</li>
+            <li key={msg.sender}>{user}: {msg.msg}</li>
           ))}
         </ul>
         <form action='POST' id='form' className='flex gap-2' onSubmit={handleSubmit}>
